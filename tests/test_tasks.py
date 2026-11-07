@@ -42,6 +42,9 @@ class TaskApiTests(unittest.TestCase):
         self.assertEqual(list_tasks()[0]["id"], created["id"])
         self.assertEqual(get_task(created["id"])["title"], "Estudar Python")
 
+        imported = create_task(TaskCreate(title="Tarefa concluída antiga", completed=True))
+        self.assertEqual(imported["completed"], 1)
+
     def test_input_validation_rejects_invalid_titles(self) -> None:
         with self.assertRaises(ValidationError):
             TaskCreate(title="")

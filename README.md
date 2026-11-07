@@ -1,12 +1,12 @@
 # TaskMaster API
 
-API REST para gerenciamento de tarefas, desenvolvida com Python e FastAPI. O projeto oferece operações CRUD, validação de dados e persistência local em SQLite.
+API REST para gerenciamento de tarefas, desenvolvida com Python e FastAPI. O projeto oferece operações CRUD, validação de dados, SQLite no computador e PostgreSQL quando hospedado.
 
 ## Recursos
 
 - Criar, listar, consultar, atualizar e excluir tarefas.
 - Validar os dados de entrada e retornar erros HTTP apropriados.
-- Salvar os dados em SQLite, preservando as tarefas após reiniciar o servidor.
+- Salvar os dados em SQLite localmente ou PostgreSQL quando `DATABASE_URL` estiver configurada.
 - Explorar e testar os endpoints pela documentação interativa do FastAPI.
 - Executar testes automatizados com o módulo `unittest` da biblioteca padrão do Python.
 
@@ -16,6 +16,7 @@ API REST para gerenciamento de tarefas, desenvolvida com Python e FastAPI. O pro
 - FastAPI
 - Uvicorn
 - SQLite (`sqlite3`, incluído no Python)
+- PostgreSQL (`psycopg`)
 - `unittest`
 
 ## Requisitos
@@ -53,6 +54,15 @@ python -m uvicorn app.main:app --reload
 - Verificação de saúde: <http://127.0.0.1:8000/health>
 
 O arquivo `taskmaster.db` é criado automaticamente na pasta do projeto quando a API inicia. Não é preciso instalar um servidor de banco de dados.
+Para desenvolvimento local, a API aceita requisições do front-end servido em `http://localhost:5500` ou `http://127.0.0.1:5500`.
+
+## Preparar a hospedagem gratuita
+
+O arquivo `render.yaml` prepara a API para o Render e permite inserir a conexão PostgreSQL pelo painel, sem salvar a senha no GitHub. No provedor PostgreSQL escolhido, crie um banco e copie a URL de conexão privada/externa indicada pelo serviço. Ao criar o serviço no Render usando o repositório `taskmaster-api`, informe essa URL no campo `DATABASE_URL`. Nunca publique essa URL: ela contém credenciais.
+
+O Render gratuito pode suspender a API quando não há uso e o banco PostgreSQL gratuito tem prazo limitado. Confira as condições atuais antes de colocar o projeto em uso contínuo. A API usa `TASKMASTER_ALLOWED_ORIGINS` para permitir o front-end publicado; o endereço configurado no `render.yaml` é para o GitHub Pages do perfil `almenaradulcino-ai`.
+
+Depois da publicação, configure no arquivo `js/app.js` do front-end o endereço HTTPS da API hospedada no lugar de `http://127.0.0.1:8000`, e publique essa alteração no repositório do front-end.
 
 ## Endpoints
 
@@ -106,10 +116,11 @@ Os testes usam um banco temporário para não alterar o arquivo de dados local.
 
 ```text
 app/
-  database.py       # Conexão SQLite e operações de persistência
+  database.py       # Conexão SQLite/PostgreSQL e operações de persistência
   main.py           # Aplicação FastAPI, modelos e endpoints
 tests/
   test_tasks.py     # Testes automatizados das operações principais
 requirements.txt    # Dependências da aplicação
 taskmaster.db      # Banco local criado durante a execução (ignorado pelo Git)
+render.yaml        # Configuração de hospedagem no Render
 ```

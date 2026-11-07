@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI, HTTPException, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.database import (
@@ -26,12 +28,29 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "TASKMASTER_ALLOWED_ORIGINS",
+        "http://localhost:5500,http://127.0.0.1:5500",
+    ).split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class TaskCreate(BaseModel):
     """Campos que o cliente precisa enviar para criar uma tarefa."""
 
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=500)
+    completed: bool = False
 
 
 class TaskResponse(BaseModel):
@@ -59,8 +78,8 @@ def health_check():
 
 @app.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(task: TaskCreate):
-    """Cria uma tarefa e a salva no banco SQLite."""
-    return save_task(task.title, task.description)
+    """Cria uma tarefa e a salva no banco configurado."""
+    return save_task(task.title, task.description, task.completed)
 
 
 @app.get("/tasks", response_model=list[TaskResponse])
